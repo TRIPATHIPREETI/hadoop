@@ -1,5 +1,5 @@
 # hadoop
-haddop programs
+hadoop programs
 ------------------------------------------------------------------------------------
 package com.hadoop.com.wordcount;
 
