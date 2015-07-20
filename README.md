@@ -1,6 +1,5 @@
 # hadoop
-hadoop programs
-This is a sample program for basic understanding of hadoop map reduce program...
+This is a sample program for basic understanding of hadoop map reduce program... Next follows the case study using the large sets of movie data from site Movie Lens.
 ------------------------------------------------------------------------------------
 package com.hadoop.com.wordcount;
 
