@@ -1,0 +1,101 @@
+This program uses two input files namely movies.dat and ratings.dat
+List all the movies and the number of ratings
+***************************************************************************************************************
+
+package com.caseStudy.movieRatings;
+
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
+
+/**
+ * @preeti: This program uses two input files namely movies.dat and ratings.dat
+ * The task is to list all the movies and the number of ratings
+ *
+ */
+public class Answer1 {
+
+	public static void main(String args[]) throws Exception {
+		Configuration conf = new Configuration();
+		Job job = new Job(conf);
+		job.setJarByClass(Answer1.class);
+		// job.setMapperClass(MovieRating.class);
+		MultipleInputs.addInputPath(job,
+				new Path("/user/impadmin/ratings.txt"), TextInputFormat.class,
+				MovieRate1.class);
+		MultipleInputs.addInputPath(job, new Path("/user/impadmin/movies.txt"),
+				TextInputFormat.class, MovieName1.class);
+		// job.setCombinerClass(IntSumReducer.class);
+		job.setReducerClass(reduce1.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+
+		FileOutputFormat.setOutputPath(job, new Path(
+				"/user/impadmin/preeti/question1.txt"));
+
+		System.exit(job.waitForCompletion(true) ? 0 : 1);
+	}
+
+	public static class MovieRate1 extends Mapper<Object, Text, Text, Text> {
+		public void map(Object key, Text text, Context context)
+				throws IOException, InterruptedException {
+
+			String Objec1[] = text.toString().split("::");
+			int movieid1 = Integer.parseInt(Objec1[1]);
+			int movierate = Integer.parseInt(Objec1[2]);
+
+			context.write(new Text(movieid1 + ""), new Text(movierate + ""));
+
+		}
+	}
+
+	public static class MovieName1 extends Mapper<Object, Text, Text, Text> {
+		public void map(Object key, Text text, Context context)
+				throws IOException, InterruptedException {
+
+			String Objec2[] = text.toString().split("::");
+			int movieid2 = Integer.parseInt(Objec2[0]);
+			String moviename = Objec2[1];
+
+			context.write(new Text(movieid2 + ""), new Text(moviename + ""));
+
+		}
+	}
+
+	public static class reduce1 extends Reducer<Text, Text, Text, Text> {
+
+		public void reduce(Text key, Iterable<Text> values, Context context)
+				throws IOException, InterruptedException {
+
+			int count = 0;
+			String moviename = "";
+			String movierate1 = "";
+
+			for (Text value : values) {
+				String val = value.toString();
+				char myChar = val.charAt(0);
+
+				if (Character.isDigit(myChar) && val.length() <= 2) {
+					movierate1 = movierate1 + "," + val.toString();
+					count++;
+				} else {
+					moviename = val;
+				}
+			}
+
+			context.write(new Text("MOVIE-NAME:"+ moviename + ""), new Text("\nCOUNT:"+ count + "\n["+ movierate1 + "]"));
+		}
+		
+	}
+
+}
