@@ -1,5 +1,6 @@
 # hadoop
 hadoop programs
+This is a sample program for basic understanding of hadoop map reduce program...
 ------------------------------------------------------------------------------------
 package com.hadoop.com.wordcount;
 
