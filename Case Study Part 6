@@ -1,0 +1,113 @@
+List all the Movies with the max,min,average ratings given by any user
+*******************************************************************************************************************
+package com.caseStudy.movieRatings;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
+import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+/**
+ * @preeti: Listing all the Movies with the max,min,average ratings given by any user
+ *
+ */
+public class Answer6 {
+
+	public static class MovieName6 extends Mapper<Object, Text, Text, Text> {
+		public void map(Object key, Text value, Context context)
+				throws IOException, InterruptedException {
+			String Objec6[] = value.toString().split("::");
+			int movieid6 = Integer.parseInt(Objec6[0]);
+			String moviename6 = Objec6[1];
+
+			context.write(new Text(movieid6 + ""), new Text(moviename6 + ""));
+		}
+	}
+
+	public static class MovieRating6 extends Mapper<Object, Text, Text, Text> {
+		public void map(Object key, Text value, Context context)
+				throws IOException, InterruptedException {
+			String objec6[] = value.toString().split("::");
+			int MovieId6 = Integer.parseInt(objec6[1]);
+			int Movierating6 = Integer.parseInt(objec6[2]);
+
+			context.write(new Text(MovieId6 + ""), new Text(Movierating6 + ""));
+		}
+
+	}
+
+	public static class reducer6 extends Reducer<Text, Text, Text, Text> {
+
+		public void reduce(Text key, Iterable<Text> value, Context context)
+				throws IOException, InterruptedException {
+
+			List<Integer> list = new ArrayList<Integer>();
+			int sum = 0;
+			String Moviename = "";
+			int Average = 0;
+			int Minimum=0;
+			int Maximum=0;
+			for (Text values : value) {
+				String val = values.toString();
+				char myChar = val.charAt(0);
+
+				if (Character.isDigit(myChar)&& val.length()==1) {
+					int rate = Integer.parseInt(val);
+					list.add(rate);
+					sum = sum + rate;
+				} else {
+					Moviename = val;
+				}
+			}
+			if(list.size()!=0){
+					Average = sum / list.size();
+					Maximum = Collections.max(list);
+					Minimum = Collections.min(list);
+			}
+			else{
+				Average = 0;
+				Maximum = 0;
+				Minimum = 0;
+			}
+			
+			String input = "\t\t\t\t\t\t\t\t\tAverage|" + Average + "\t\tMaximum|" + Maximum
+					+ "\t\tMinimum|" + Minimum;
+
+			context.write(new Text("Moviename:" + Moviename), new Text(input+""));
+		}
+	}
+
+	public static void main(String args[]) throws Exception {
+		Configuration conf = new Configuration();
+		Job job = new Job(conf);
+		job.setJarByClass(Answer6.class);
+		// job.setMapperClass(MovieRating.class);
+		MultipleInputs.addInputPath(job,
+				new Path("/user/impadmin/ratings.txt"), TextInputFormat.class,
+				MovieRating6.class);
+		MultipleInputs.addInputPath(job, new Path("/user/impadmin/movies.txt"),
+				TextInputFormat.class, MovieName6.class);
+		// job.setCombinerClass(IntSumReducer.class);
+		job.setReducerClass(reducer6.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+
+		FileOutputFormat.setOutputPath(job, new Path(
+				"/user/impadmin/preeti/question6.txt"));
+		System.exit(job.waitForCompletion(true) ? 0 : 1);
+
+	}
+
+}
