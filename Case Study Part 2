@@ -1,0 +1,108 @@
+package com.caseStudy.movieRatings;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+/**
+ * @PREETI: Listing of all the users and the number of ratings they have done for a movie
+ *
+ */
+public class Answer2 {
+
+	public static class MovieName2 extends Mapper<Object, Text, Text, Text> {
+		public void map(Object key, Text text, Context context)
+				throws IOException, InterruptedException {
+
+			String Objec2[] = text.toString().split("::");
+			int movieid2 = Integer.parseInt(Objec2[0]);
+			String moviename = Objec2[1];
+
+			context.write(new Text(movieid2 + ""), new Text(moviename + ""));
+
+		}
+	}
+
+	public static class MovieRatings2 extends Mapper<Object, Text, Text, Text> {
+		public void map(Object key, Text text, Context context)
+				throws IOException, InterruptedException {
+            
+			String Objec1[] = text.toString().split("::");
+			int movieid1 = Integer.parseInt(Objec1[1]);
+			int userid = Integer.parseInt(Objec1[0]);
+			int rating = Integer.parseInt(Objec1[2]);
+			String combination= "*"+userid+","+rating;
+			context.write(new Text(movieid1 + ""), new Text(combination+""));
+
+		}
+	}
+
+	public static class reduce2 extends Reducer<Text, Text, Text, Text> {
+
+		public void reduce(Text key, Iterable<Text> values, Context context)
+				throws IOException, InterruptedException {
+			List<String> list= new ArrayList<String>();
+			
+			int i;
+			String userid = "";
+			String moviename = "";
+			String inputValue="";
+            String rating = "";
+			for (Text value : values) {
+				String val = value.toString();
+				char myChar = val.charAt(0);
+				
+				if (myChar=='*') 
+				{
+						list.add(val);				
+				} 
+				else
+				{
+					moviename=val;
+				}	
+			}
+			
+          for(i=0;i<list.size();i++){
+        		String Objec2[]=  list.get(i).split(",");
+        		userid= (Objec2[0]);
+        		rating= (Objec2[1]);			
+        		
+        		
+             inputValue= "\t\tMOVIE :"+moviename+"\t\tRATING : "+rating;
+        	  context.write(new Text("USER : "+userid),new Text(inputValue));
+        	  }
+		}
+}			
+			
+	public static void main(String args[]) throws Exception {
+		Configuration conf = new Configuration();
+		Job job = new Job(conf);
+		job.setJarByClass(Answer2.class);
+		// job.setMapperClass(MovieRating.class);
+		
+		MultipleInputs.addInputPath(job, new Path("/user/impadmin/movies.txt"),
+				TextInputFormat.class, MovieName2.class);
+		MultipleInputs.addInputPath(job, new Path("/user/impadmin/ratings.txt"),
+				TextInputFormat.class, MovieRatings2.class);
+		// job.setCombinerClass(IntSumReducer.class);
+		 job.setReducerClass(reduce2.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+
+		FileOutputFormat.setOutputPath(job, new Path(
+				"/user/impadmin/preeti/question2.txt"));
+
+		System.exit(job.waitForCompletion(true) ? 0 : 1);
+	}
+
+}
