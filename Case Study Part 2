@@ -1,3 +1,7 @@
+
+List all the users and the number of ratings they have done for a movie
+**********************************************************************************************************************
+
 package com.caseStudy.movieRatings;
 
 import java.io.IOException;
