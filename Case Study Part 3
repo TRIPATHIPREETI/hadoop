@@ -1,0 +1,76 @@
+
+List all the Movie IDs which have been rated (Movie Id with atleast one user rating it)
+*******************************************************************************************************************
+
+package com.caseStudy.movieRatings;
+
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
+import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+
+/**
+ * @Preeti: Listing all the Movie IDs which have been at-least rated by one user
+ *
+ */
+public class Answer3 {
+
+public static class movieratings1 extends Mapper<Object,Text,Text,Text >{
+	public void map(Object key,Text value,Context context) throws IOException, InterruptedException{
+		
+		String array[]=value.toString().split("::");
+		int movieid3= Integer.parseInt(array[1]);
+		int rating3= Integer.parseInt(array[2]);
+		
+		context.write(new Text(movieid3+""), new Text(rating3+""));
+	}
+	}	
+	
+	public static class reducer3 extends Reducer< Text,Text,Text,Text>{
+
+		public void reduce(Text key, Iterable<Text> value, Context context)
+				throws IOException, InterruptedException{
+			String ratings3="";
+			for(Text values:value){
+				String str= values.toString()+",";
+				ratings3=ratings3+str;
+			}
+				
+		context.write(new Text("\n movieid :"+key+""), new Text ("\n\n["+ratings3+""+"]"));
+		
+	
+	}
+	
+		
+	}
+	
+	public static void main(String args[]) throws Exception {
+		Configuration conf = new Configuration();
+		Job job = new Job(conf);
+		job.setJarByClass(Answer3.class);
+		// job.setMapperClass(MovieRating.class);
+		MultipleInputs.addInputPath(job,
+				new Path("/user/impadmin/ratings.txt"), TextInputFormat.class,
+				movieratings1.class);
+		//MultipleInputs.addInputPath(job, new Path("/user/impadmin/movies.txt"),
+			//	TextInputFormat.class, MovieName.class);
+		// job.setCombinerClass(IntSumReducer.class);
+		job.setReducerClass(reducer3.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+
+		FileOutputFormat.setOutputPath(job, new Path(
+				"/user/impadmin/preeti/question3.txt"));
+
+		System.exit(job.waitForCompletion(true) ? 0 : 1);
+	}
+}
